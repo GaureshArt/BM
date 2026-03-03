@@ -1,0 +1,43 @@
+
+@baseUrl = http://localhost:3000
+
+
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "firstName": "Zavian",
+  "lastName": "Art",
+  "email": "gauresh@example.com",
+  "phoneNumber": "+919876543219",
+  "password": "securePassword123"
+}
+
+###
+
+
+GET {{baseUrl}}/users?page=1&limit=5
+
+###
+
+
+GET {{baseUrl}}/users/14
+
+###
+
+
+PATCH {{baseUrl}}/users/1
+Content-Type: application/json
+
+{
+  "firstName": "Gauresh-Updated"
+}
+
+###
+
+
+DELETE {{baseUrl}}/users/1
+
+###
+GET {{baseUrl}}/users/secure-data
+auth-key:my-secret-keyg
