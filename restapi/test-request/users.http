@@ -1,31 +1,28 @@
-
 @baseUrl = http://localhost:3000
 
-
+### 1. CREATE USER (POST)
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "firstName": "Zavian",
-  "lastName": "Art",
-  "email": "gauresh@example.com",
+  "firstName": "Micheal",
+  "lastName": "JS",
+  "email": "mecheal@example.com",
   "phoneNumber": "+919876543219",
   "password": "securePassword123"
 }
 
-###
-
-
-GET {{baseUrl}}/users?page=1&limit=5
-
-###
-
-
+### 2. LIST ALL (No Pagination)
 GET {{baseUrl}}/users
 
-###
+### 3. LIST WITH PAGINATION, SORTING & FILTERING
+# Tests sorting by name and filtering by email
+GET {{baseUrl}}/users?page=2&limit=2
 
+### 4. GET SINGLE USER (404 Test if ID is wrong)
+GET {{baseUrl}}/users/1
 
+### 5. UPDATE USER (PATCH)
 PATCH {{baseUrl}}/users/1
 Content-Type: application/json
 
@@ -33,34 +30,31 @@ Content-Type: application/json
   "firstName": "Gauresh-Updated"
 }
 
-###
-
-
+### 6. DELETE USER (204 No Content)
 DELETE {{baseUrl}}/users/1
 
-###
+### 7. AUTH TEST (401 Unauthorized)
 GET {{baseUrl}}/users/secure-data
-auth-key:my-secret-keyg
+auth-key: my-secret-key
+role: admin
 
-
-### Test 500 Internal Server Error
+### 8. 500 INTERNAL SERVER ERROR
 GET {{baseUrl}}/users/isr
 
-### Test 504 Gateway Timeout Simulation
-# (Keep clicking until you get a 504)
+### 9. 504 GATEWAY TIMEOUT 
 GET {{baseUrl}}/users/timeout
 
-### Test 502 Bad Gateway Simulation
-# (Converts a 504 into a 502)
+### 10. 502 BAD GATEWAY 
 GET {{baseUrl}}/users/badgateway
 
-### Test 422 Unprocessable Entity
+### 11. 422 UNPROCESSABLE ENTITY (Duplicate Email)
+
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "firstName": "Duplicate",
-  "lastName": "User",
+  "firstName": "Zavian",
+  "lastName": "Art",
   "email": "gauresh@example.com",
   "phoneNumber": "+919876543219",
   "password": "securePassword123"

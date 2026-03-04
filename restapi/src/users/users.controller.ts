@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, HttpCode, HttpStatus, Headers, UnauthorizedException, InternalServerErrorException, GatewayTimeoutException, BadGatewayException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, HttpCode, HttpStatus, Headers, UnauthorizedException, InternalServerErrorException, GatewayTimeoutException, BadGatewayException, Header, ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,15 +14,26 @@ export class UsersController {
 
   @Get()
   findAll(
-    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('sortBy') sortBy?: string,
+    @Query('order') order: 'ASC' | 'DESC' = 'ASC',
+    @Query('filterField') filterField?: string,
+    @Query('filterValue') filterValue?: string,
   ) {
-    return this.usersService.list(page, limit);
+    return this.usersService.list(page, limit, sortBy, order, filterField, filterValue)
   }
   @Get('secure-data')
-  getSecureData(@Headers('auth-key') apiKey: string) {
+  getSecureData(
+    @Headers('auth-key') apiKey: string,
+    @Headers('role') role: string
+  ) {
+
     if (apiKey !== 'my-secret-key') {
-      throw new UnauthorizedException('Missing or invalid API Key');
+      throw new UnauthorizedException('Missing or invalid Auth Key');
+    }
+    if (role !== 'admin') {
+      throw new ForbiddenException('Not have admin level permissions to access this data');
     }
     return { data: 'Secret info' };
   }

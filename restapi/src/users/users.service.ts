@@ -1,4 +1,4 @@
-import { GatewayTimeoutException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, GatewayTimeoutException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -22,41 +22,73 @@ export class UsersService {
     return newUser;
   }
 
-  list(page?: number, limit?: number) {
-    const total_records = this.users.length;
+  list(
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    order: 'ASC' | 'DESC' = 'ASC',
+    filterField?: string,
+    filterValue?: string,
+  ) {
+
+    let result = [...this.users];
+    if (filterField && filterValue) {
+      if (this.users.length > 0 && !(filterField in this.users[0])) {
+        throw new BadRequestException(`Invalid filter field: ${filterField}`);
+      }
+      result = result.filter((user) => {
+        const value = user[filterField as keyof User];
+        return String(value).toLowerCase().includes(filterValue.toLowerCase());
+      });
+    }
+    if (sortBy) {
+      if (this.users.length > 0 && !(sortBy in this.users[0])) {
+        throw new BadRequestException(`Invalid sort field: ${sortBy}`);
+      }
+      result.sort((a, b) => {
+        const fieldA = a[sortBy as keyof User];
+        const fieldB = b[sortBy as keyof User];
+
+        if (fieldA < fieldB) return order === 'ASC' ? -1 : 1;
+        if (fieldA > fieldB) return order === 'ASC' ? 1 : -1;
+        return 0;
+      });
+    }
+    const total_records = result.length;
+
 
     if (!page && !limit) {
       return {
-        data: this.users,
+        success: true,
+        data: result,
         pagination: {
           total_records,
           current_page: 1,
           total_pages: 1,
           next_page: null,
-          prev_page: null
-        }
+          prev_page: null,
+        },
       };
     }
-
     const p = page || 1;
     const l = limit || 10;
     const total_pages = Math.ceil(total_records / l);
     const startIndex = (p - 1) * l;
 
-    const items = this.users.slice(startIndex, startIndex + l);
+    const items = result.slice(startIndex, startIndex + l);
 
     return {
+      success: true,
       data: items,
       pagination: {
         total_records,
         current_page: p,
         total_pages,
         next_page: p < total_pages ? p + 1 : null,
-        prev_page: p > 1 ? p - 1 : null
-      }
+        prev_page: p > 1 ? p - 1 : null,
+      },
     };
   }
-
   findOne(id: number): User {
     const user = this.users.find((u) => u.id === id);
     if (!user) {
