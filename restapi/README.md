@@ -1,98 +1,213 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Week 5 - Backend Fundamentals & REST APIs Assignment
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🛠️ Endpoint Specifications
 
-## Description
+### 1. List Users (Collection)
+**URL:** `GET /users`
+**Purpose:** Retrieves multiple users with support for pagination, sorting, and filtering.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Parameter  | Description |
+| :--- |  :--- |
+| `page` |  The current page number (Default: 1)|
+| `limit` | Records per page (Default: 10) |
+| `sortBy` |  Field name to sort results (e.g., `firstName`, `email`) |
+| `order` |  Sorting direction: `ASC` (Ascending) or `DESC` (Descending) |
+| `filterField` | The specific user field to filter by |
+| `filterValue` | The search value to match against the filter field |
 
-## Project setup
+**Success Response (200 OK):**
 
-```bash
-$ pnpm install
+>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "firstName": "Aarav",
+      "lastName": "Sharma",
+      "email": "aarav.s@example.com",
+      "phoneNumber": "+919876543201",
+      "password": "vK9!2pL#qR",
+      "createdAt": "2026-03-04T09:07:30.747Z"
+    },
+    {
+      "id": 2,
+      "firstName": "Vihaan",
+      "lastName": "Verma",
+      "email": "vihaan.v@example.com",
+      "phoneNumber": "+919876543202",
+      "password": "zM4*8xN@tB",
+      "createdAt": "2026-03-04T09:07:45.196Z"
+    },
+    {
+      "id": 3,
+      "firstName": "Aditya",
+      "lastName": "Gupta",
+      "email": "aditya.g@example.com",
+      "phoneNumber": "+919876543203",
+      "password": "hJ7$1kF^uY",
+      "createdAt": "2026-03-04T09:08:42.136Z"
+    },
+    {
+      "id": 4,
+      "firstName": "Arjun",
+      "lastName": "Malhotra",
+      "email": "arjun.m@example.com",
+      "phoneNumber": "+919876543204",
+      "password": "dW2&5eS*oP",
+      "createdAt": "2026-03-04T09:08:51.397Z"
+    },
+    {
+      "id": 5,
+      "firstName": "Sai",
+      "lastName": "Reddy",
+      "email": "sai.r@example.com",
+      "phoneNumber": "+919876543205",
+      "password": "qA9(0zX!mN",
+      "createdAt": "2026-03-04T09:08:58.969Z"
+    },
+    {
+      "id": 6,
+      "firstName": "Ishaan",
+      "lastName": "Nair",
+      "email": "ishaan.n@example.com",
+      "phoneNumber": "+919876543206",
+      "password": "gK3#6vL@bR",
+      "createdAt": "2026-03-04T09:11:02.893Z"
+    },
+    {
+      "id": 7,
+      "firstName": "Krishna",
+      "lastName": "Iyer",
+      "email": "krishna.i@example.com",
+      "phoneNumber": "+919876543207",
+      "password": "xP5%8yT*nQ",
+      "createdAt": "2026-03-04T09:11:10.856Z"
+    },
+    {
+      "id": 8,
+      "firstName": "Rohan",
+      "lastName": "Deshmukh",
+      "email": "rohan.d@example.com",
+      "phoneNumber": "+919876543208",
+      "password": "uH1@4kM^jI",
+      "createdAt": "2026-03-04T09:11:21.730Z"
+    },
+    {
+      "id": 9,
+      "firstName": "Kabir",
+      "lastName": "Singh",
+      "email": "kabir.s@example.com",
+      "phoneNumber": "+919876543209",
+      "password": "sD9&2fG#lK",
+      "createdAt": "2026-03-04T09:11:30.093Z"
+    },
+    {
+      "id": 10,
+      "firstName": "Aryan",
+      "lastName": "Patel",
+      "email": "aryan.p@example.com",
+      "phoneNumber": "+919876543210",
+      "password": "mN4!7bV@qW",
+      "createdAt": "2026-03-04T09:11:55.587Z"
+    }
+  ],
+  "pagination": {
+    "total_records": 16,
+    "current_page": 1,
+    "total_pages": 2,
+    "next_page": 2,
+    "prev_page": null
+  }
+}
 ```
+### GET /users?page=2&limit=5
 
-## Compile and run the project
+output:
+<img width="219" height="670" alt="image" src="https://github.com/user-attachments/assets/94b60386-4e2e-4b05-86e8-504697bf2904" />
 
-```bash
-# development
-$ pnpm run start
 
-# watch mode
-$ pnpm run start:dev
+### GET /users?sortBy=firstName&order=ASC&page=1&limit=5
+<img width="239" height="691" alt="image" src="https://github.com/user-attachments/assets/68bd356e-865f-48b9-942c-0adbec0b58d1" />
 
-# production mode
-$ pnpm run start:prod
-```
+---
 
-## Run tests
+### 2. Create New User
+**URL:** `POST /users`
+**Purpose:** Registers a new user account with strict data validation
+**Request Body:** Requires `firstName`, `lastName`, `email`, `phoneNumber`, and `password`.
 
-```bash
-# unit tests
-$ pnpm run test
+**Success Response (201 Created):**
+<img width="1100" height="407" alt="image" src="https://github.com/user-attachments/assets/fde94af7-11c1-4d3a-b396-1b68be0f7dfb" />
 
-# e2e tests
-$ pnpm run test:e2e
 
-# test coverage
-$ pnpm run test:cov
-```
+---
 
-## Deployment
+### 3. Retrieve Specific User
+**URL:** `GET /users/:id`
+**Purpose:** Retrieves detailed information for a specific user based on their ID.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**Success Response (200 OK):**
+<img width="1132" height="172" alt="image" src="https://github.com/user-attachments/assets/104799f6-bcd1-4148-b74d-343eff4e274a" />
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+### 4. Partial User Update
+**URL:** `PATCH /users/:id`
+**Purpose:** Modifies specific fields of an existing user resource using PATCH for partial updates
 
-Check out a few resources that may come in handy when working with NestJS:
+**Success Response (200 OK):**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+<img width="1153" height="371" alt="image" src="https://github.com/user-attachments/assets/adaf9421-61ef-498b-b856-d9b30f6dce2e" />
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 5. Remove User
+**URL:** `DELETE /users/:id`
+**Purpose:** Permanently deletes a user record from the system
 
-## Stay in touch
+**Success Response (204 No Content):**
+<img width="1230" height="258" alt="image" src="https://github.com/user-attachments/assets/57853986-6aec-41c7-b0df-a1431ceb7b93" />
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-## License
+### Entering duplicate data(email):
+ <img width="1191" height="296" alt="image" src="https://github.com/user-attachments/assets/b914a770-0c1a-4540-8bdd-36a408dd7206" />
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+### Authorization error.
+
+**without sending auth key:(401)**
+<img width="1077" height="271" alt="image" src="https://github.com/user-attachments/assets/47607307-0483-4d35-b36f-a573b0e0d4f1" />
+
+**with auth key**  and **proper role (admin)**
+<img width="1077" height="271" alt="image" src="https://github.com/user-attachments/assets/086de1f9-5597-4b2b-8382-df60dad04148" />
+
+### forbidden error (403)**
+**without role**
+<img width="1230" height="258" alt="image" src="https://github.com/user-attachments/assets/48f51429-5513-4e8e-bd9f-4c2ff171ea32" />
+
+
+
+ 
+
+
+
+---
+
+##  5xx Simulations
+A key requirement of this assignment is handling server-side failures gracefully. The following endpoints simulate common **5xx Server Errors**
+
+**500 Internal Server Error (`/users/isr`)**: Simulates an unexpected server failure.
+<img width="1191" height="296" alt="image" src="https://github.com/user-attachments/assets/15789f29-aa5c-4f47-936f-8ada633f1e6c" />
+
+**504 Gateway Timeout (`/users/timeout`)**: Simulates an upstream server failing to respond within a defined time threshold using promise.
+
+<img width="1147" height="268" alt="image" src="https://github.com/user-attachments/assets/b849a31d-0da3-4d5e-bf15-b18612e3979a" />
+
+**502 Bad Gateway (`/users/badgateway`)**: Simulates a gateway receiving an invalid response from the upstream server
+<img width="1191" height="296" alt="image" src="https://github.com/user-attachments/assets/bc22ac92-d360-4f45-b6b0-aecd47966d64" />
