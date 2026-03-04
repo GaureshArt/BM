@@ -1,13 +1,13 @@
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:3000/api/v1
 
 ### 1. CREATE USER (POST)
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "firstName": "Micheal",
+  "firstName": "rahan",
   "lastName": "JS",
-  "email": "mecheal@example.com",
+  "email": "rahan@example.com",
   "phoneNumber": "+919876543219",
   "password": "securePassword123"
 }
@@ -17,7 +17,7 @@ GET {{baseUrl}}/users
 
 ### 3. LIST WITH PAGINATION, SORTING & FILTERING
 # Tests sorting by name and filtering by email
-GET {{baseUrl}}/users?page=2&limit=2
+GET {{baseUrl}}/users?filterField=firstName&filterValue=rahan
 
 ### 4. GET SINGLE USER (404 Test if ID is wrong)
 GET {{baseUrl}}/users/1
