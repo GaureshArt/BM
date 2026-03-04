@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, HttpCode, HttpStatus, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, HttpCode, HttpStatus, Headers, UnauthorizedException, InternalServerErrorException, GatewayTimeoutException, BadGatewayException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,7 +17,7 @@ export class UsersController {
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    return this.usersService.findAll(page || 1, limit || 10);
+    return this.usersService.list(page, limit);
   }
   @Get('secure-data')
   getSecureData(@Headers('auth-key') apiKey: string) {
@@ -25,6 +25,25 @@ export class UsersController {
       throw new UnauthorizedException('Missing or invalid API Key');
     }
     return { data: 'Secret info' };
+  }
+  @Get('isr')
+  throwError() {
+    throw new InternalServerErrorException('Something went wrong!.')
+  }
+  @Get('timeout')
+  async timeout() {
+    return await this.usersService.timeout()
+  }
+  @Get('badgateway')
+  async badGateway() {
+    try {
+      return await this.timeout()
+    } catch (err) {
+      if (err instanceof GatewayTimeoutException) {
+        throw new BadGatewayException(`Gateway received atimeout from upstream server`)
+      }
+      throw new InternalServerErrorException('Somewthisg went wrong')
+    }
   }
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {

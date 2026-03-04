@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { GatewayTimeoutException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -9,6 +9,10 @@ export class UsersService {
   private idCounter = 1;
 
   create(createUserDto: CreateUserDto): User {
+    const isEmailExist = this.users.find(u => u.email == createUserDto.email);
+    if (isEmailExist) {
+      throw new UnprocessableEntityException('This is email is already exist')
+    }
     const newUser = {
       id: this.idCounter++,
       ...createUserDto,
@@ -17,22 +21,39 @@ export class UsersService {
     this.users.push(newUser);
     return newUser;
   }
-  findAll(page: number = 1, limit: number = 10) {
-    const totalItems = this.users.length;
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
 
-    const items = this.users.slice(startIndex, endIndex);
+  list(page?: number, limit?: number) {
+    const total_records = this.users.length;
+
+    if (!page && !limit) {
+      return {
+        data: this.users,
+        pagination: {
+          total_records,
+          current_page: 1,
+          total_pages: 1,
+          next_page: null,
+          prev_page: null
+        }
+      };
+    }
+
+    const p = page || 1;
+    const l = limit || 10;
+    const total_pages = Math.ceil(total_records / l);
+    const startIndex = (p - 1) * l;
+
+    const items = this.users.slice(startIndex, startIndex + l);
 
     return {
-      items,
-      meta: {
-        totalItems,
-        itemCount: items.length,
-        itemsPerPage: limit,
-        totalPages: Math.ceil(totalItems / limit),
-        currentPage: page,
-      },
+      data: items,
+      pagination: {
+        total_records,
+        current_page: p,
+        total_pages,
+        next_page: p < total_pages ? p + 1 : null,
+        prev_page: p > 1 ? p - 1 : null
+      }
     };
   }
 
@@ -57,5 +78,24 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     this.users.splice(userIndex, 1);
+  }
+
+  async timeout() {
+    const TIMEOUT_THRESHOLD = 200;
+    const timeTaken = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
+    return new Promise((res, rej) => {
+      setTimeout(() => {
+        if (timeTaken <= TIMEOUT_THRESHOLD) {
+          res({
+            success: true,
+            message: 'request processed successfully',
+            time: timeTaken
+          })
+        }
+        else {
+          rej(new GatewayTimeoutException(`Tiem exceed the timeout threshold: ${timeTaken}`))
+        }
+      }, timeTaken)
+    })
   }
 }

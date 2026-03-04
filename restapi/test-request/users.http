@@ -21,7 +21,7 @@ GET {{baseUrl}}/users?page=1&limit=5
 ###
 
 
-GET {{baseUrl}}/users/14
+GET {{baseUrl}}/users
 
 ###
 
@@ -41,3 +41,27 @@ DELETE {{baseUrl}}/users/1
 ###
 GET {{baseUrl}}/users/secure-data
 auth-key:my-secret-keyg
+
+
+### Test 500 Internal Server Error
+GET {{baseUrl}}/users/isr
+
+### Test 504 Gateway Timeout Simulation
+# (Keep clicking until you get a 504)
+GET {{baseUrl}}/users/timeout
+
+### Test 502 Bad Gateway Simulation
+# (Converts a 504 into a 502)
+GET {{baseUrl}}/users/badgateway
+
+### Test 422 Unprocessable Entity
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "firstName": "Duplicate",
+  "lastName": "User",
+  "email": "gauresh@example.com",
+  "phoneNumber": "+919876543219",
+  "password": "securePassword123"
+}
