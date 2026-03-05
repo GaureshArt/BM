@@ -1,4 +1,4 @@
-import { BadRequestException, GatewayTimeoutException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -11,7 +11,11 @@ export class UsersService {
   create(createUserDto: CreateUserDto): User {
     const isEmailExist = this.users.find(u => u.email == createUserDto.email);
     if (isEmailExist) {
-      throw new UnprocessableEntityException('This is email is already exist')
+      throw new HttpException({
+        error_code: 'USER_ALREADY_EXISTS',
+        message: 'An account with this email address already exists.',
+        context: { field: 'email' }
+      }, HttpStatus.UNPROCESSABLE_ENTITY);
     }
     const newUser = {
       id: this.idCounter++,
@@ -30,20 +34,29 @@ export class UsersService {
     filterField?: string,
     filterValue?: string,
   ) {
-
     let result = [...this.users];
+
     if (filterField && filterValue) {
       if (this.users.length > 0 && !(filterField in this.users[0])) {
-        throw new BadRequestException(`Invalid filter field: ${filterField}`);
+        throw new HttpException({
+          error_code: 'INVALID_FILTER_FIELD',
+          message: `The field '${filterField}' does not exist.`,
+          context: { available_fields: Object.keys(this.users[0]) }
+        }, HttpStatus.BAD_REQUEST);
       }
       result = result.filter((user) => {
         const value = user[filterField as keyof User];
         return String(value).toLowerCase().includes(filterValue.toLowerCase());
       });
     }
+
     if (sortBy) {
       if (this.users.length > 0 && !(sortBy in this.users[0])) {
-        throw new BadRequestException(`Invalid sort field: ${sortBy}`);
+        throw new HttpException({
+          error_code: 'INVALID_SORT_FIELD',
+          message: `The sort field '${sortBy}' does not exist.`,
+          context: { available_fields: Object.keys(this.users[0]) }
+        }, HttpStatus.BAD_REQUEST);
       }
       result.sort((a, b) => {
         const fieldA = a[sortBy as keyof User];
@@ -54,8 +67,8 @@ export class UsersService {
         return 0;
       });
     }
-    const total_records = result.length;
 
+    const total_records = result.length;
 
     if (!page && !limit) {
       return {
@@ -70,10 +83,24 @@ export class UsersService {
         },
       };
     }
-    const p = page || 1;
-    const l = limit || 10;
-    const total_pages = Math.ceil(total_records / l);
+
+    const p = page && page > 0 ? page : 1;
+    const l = limit && limit > 0 ? limit : 10;
+    const total_pages = Math.max(Math.ceil(total_records / l), 1);
     const startIndex = (p - 1) * l;
+
+    if (p > total_pages && total_records > 0) {
+      throw new HttpException({
+        error_code: 'INVALID_PAGINATION_OFFSET',
+        message: "The requested page exceeds the total available pages.",
+        context: {
+          requested_page: p,
+          total_pages,
+          limit: l,
+          total_records
+        }
+      }, HttpStatus.BAD_REQUEST);
+    }
 
     const items = result.slice(startIndex, startIndex + l);
 
@@ -89,25 +116,40 @@ export class UsersService {
       },
     };
   }
+
   findOne(id: number): User {
     const user = this.users.find((u) => u.id === id);
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new HttpException({
+        error_code: 'RESOURCE_NOT_FOUND',
+        message: `User with ID ${id} not found.`,
+        context: { resource_id: id }
+      }, HttpStatus.NOT_FOUND);
     }
     return user;
   }
+
   update(id: number, updateUserDto: UpdateUserDto): User {
     const userIndex = this.users.findIndex((u) => u.id === id);
     if (userIndex === -1) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new HttpException({
+        error_code: 'RESOURCE_NOT_FOUND',
+        message: `User with ID ${id} not found.`,
+        context: { resource_id: id }
+      }, HttpStatus.NOT_FOUND);
     }
     this.users[userIndex] = { ...this.users[userIndex], ...updateUserDto };
     return this.users[userIndex];
   }
+
   remove(id: number): void {
     const userIndex = this.users.findIndex((u) => u.id === id);
     if (userIndex === -1) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new HttpException({
+        error_code: 'RESOURCE_NOT_FOUND',
+        message: `User with ID ${id} not found.`,
+        context: { resource_id: id }
+      }, HttpStatus.NOT_FOUND);
     }
     this.users.splice(userIndex, 1);
   }
@@ -122,12 +164,15 @@ export class UsersService {
             success: true,
             message: 'request processed successfully',
             time: timeTaken
-          })
+          });
+        } else {
+          rej(new HttpException({
+            error_code: 'GATEWAY_TIMEOUT',
+            message: `Time exceeded the timeout threshold.`,
+            context: { timeTaken, threshold: TIMEOUT_THRESHOLD }
+          }, HttpStatus.GATEWAY_TIMEOUT));
         }
-        else {
-          rej(new GatewayTimeoutException(`Tiem exceed the timeout threshold: ${timeTaken}`))
-        }
-      }, timeTaken)
-    })
+      }, timeTaken);
+    });
   }
 }
