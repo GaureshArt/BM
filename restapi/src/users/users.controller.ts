@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe,
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUsersDto } from './dto/query-user.dto';
 
 @Controller('api/v1/users')
 export class UsersController {
@@ -13,15 +14,15 @@ export class UsersController {
   }
 
   @Get()
-  findAll(
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
-    @Query('sortBy') sortBy?: string,
-    @Query('order') order: 'ASC' | 'DESC' = 'ASC',
-    @Query('filterField') filterField?: string,
-    @Query('filterValue') filterValue?: string,
-  ) {
-    return this.usersService.list(page, limit, sortBy, order, filterField, filterValue)
+  findAll(@Query() query: QueryUsersDto) {
+    return this.usersService.list(
+      query.page,
+      query.limit,
+      query.sortBy,
+      query.order,
+      query.filterField,
+      query.filterValue
+    );
   }
   @Get('secure-data')
   getSecureData(
