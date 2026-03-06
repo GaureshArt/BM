@@ -165,7 +165,26 @@ export class UsersService {
     return this.users[userIndex];
   }
 
-  remove(id: number): void {
+  remove(userId: number, id: number): void {
+
+    const user = this.users.find(u => u.id === +userId);
+    const userRole = user?.role;
+    if (!userRole) {
+      throw new HttpException({
+        error_code: 'INVALID_CREDENTIALS',
+        message: 'The account associated with this session no longer exists.',
+      }, HttpStatus.UNAUTHORIZED)
+    }
+    if (userRole === UserRoleEnum.staff && +(userId) !== id) {
+      throw new HttpException({
+        error_code: 'INSUFFICIENT_PERMISSIONS',
+        message: 'You do not have the required permissions to perform this action.',
+        context: {
+          reason: 'You can only modified your data or need admin level permissions',
+          current_role: userRole
+        }
+      }, HttpStatus.FORBIDDEN)
+    }
     const userIndex = this.users.findIndex((u) => u.id === id);
     if (userIndex === -1) {
       throw new HttpException({

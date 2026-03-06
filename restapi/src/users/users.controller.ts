@@ -69,7 +69,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  remove(@Headers('user-id') userId: number, @Param('id', ParseIntPipe) id: number) {
+    return this.usersService.remove(userId, id);
   }
 }
