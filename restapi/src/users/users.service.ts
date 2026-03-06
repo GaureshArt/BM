@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, UserRoleEnum } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -129,7 +129,30 @@ export class UsersService {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto): User {
+  update(userId: number, id: number, updateUserDto: UpdateUserDto): User {
+    console.log(userId);
+    const user = this.users.find(u => u.id === +userId)
+    const userRole = user?.role
+    // console.log("role: ", user)
+    // console.log("role: ", userRole)
+    if (!userRole) {
+      throw new HttpException({
+        error_code: 'INVALID_CREDENTIALS',
+        message: 'The account associated with this session no longer exists.',
+      }, HttpStatus.UNAUTHORIZED)
+    }
+    // console.log(userRole)
+    // console.log(UserRoleEnum[1])
+    if (userRole === UserRoleEnum.staff && (+userId) !== id) {
+      throw new HttpException({
+        error_code: 'INSUFFICIENT_PERMISSIONS',
+        message: 'You do not have the required permissions to perform this action.',
+        context: {
+          reason: 'You can only modified your data or need admin level permissions',
+          current_role: userRole
+        }
+      }, HttpStatus.FORBIDDEN)
+    }
     const userIndex = this.users.findIndex((u) => u.id === id);
     if (userIndex === -1) {
       throw new HttpException({
