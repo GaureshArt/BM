@@ -1,61 +1,343 @@
+# @baseUrl = http://localhost:3000/api/v1
+
+# ### 1. CREATE USER (POST)
+# POST {{baseUrl}}/users
+# Content-Type: application/json
+
+# {
+# "firstName": "raj",
+# "lastName": "Kasale",
+# "email": "vijay@example",
+# "phoneNumber": "+91987654324",
+# "password": "zB1*9mN^jQ"
+# }
+
+
+
+
+
+
+
+
+
+
+# ### 2. LIST ALL (No Pagination)
+# GET {{baseUrl}}/users?page=1&limit=-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 3. LIST WITH PAGINATION, SORTING & FILTERING
+
+# GET {{baseUrl}}/users
+
+
+
+
+
+
+
+
+
+# GET {{baseUrl}}/users/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 5. UPDATE USER (PATCH)
+# GET {{baseUrl}}/users/
+# # Content-Type: application/json
+
+# # {
+# #   "firstName": "Sai-updated"
+# # }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 6. DELETE USER (204 No Content)
+# DELETE {{baseUrl}}/users/7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 7. AUTH TEST (401 Unauthorized)
+# GET {{baseUrl}}/users/secure-data
+# auth-key: my-secret-key
+# role: admin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 8. 500 INTERNAL SERVER ERROR
+# GET {{baseUrl}}/users/isr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 9. 504 GATEWAY TIMEOUT 
+# GET {{baseUrl}}/users/timeout
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 10. 502 BAD GATEWAY 
+# GET {{baseUrl}}/users/badgateway
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ### 11. 422 UNPROCESSABLE ENTITY (Duplicate Email)
+
+# POST {{baseUrl}}/users
+# Content-Type: application/json
+
+# {
+#   "firstName": "aditya",
+#   "lastName": "Art",
+#   "email": "aditya.g@example.com",
+#   "phoneNumber": "+919876543219",
+#   "password": "securePassword123"
+# }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @baseUrl = http://localhost:3000/api/v1
 
-### 1. CREATE USER (POST)
+### ==========================================
+### SUCCESS SCENARIOS (Run these first to populate data)
+### ==========================================
+
+### CREATE USER (Valid)
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "firstName": "rahan",
-  "lastName": "JS",
-  "email": "rahan@example.com",
-  "phoneNumber": "+919876543219",
-  "password": "securePassword123"
+  "firstName": "Gauresh",
+  "lastName": "Tambe",
+  "email": "gauresh@example.com",
+  "phoneNumber": "+919876543210",
+  "password": "securePassword123",
+  "role":"staff"
 }
 
-### 2. LIST ALL (No Pagination)
-GET {{baseUrl}}/users
+###
 
-### 3. LIST WITH PAGINATION, SORTING & FILTERING
-# Tests sorting by name and filtering by email
-GET {{baseUrl}}/users?filterField=firstName&filterValue=rahan
-
-### 4. GET SINGLE USER (404 Test if ID is wrong)
-GET {{baseUrl}}/users/1
-
-### 5. UPDATE USER (PATCH)
 PATCH {{baseUrl}}/users/1
+user-id:1
 Content-Type: application/json
 
 {
-  "firstName": "Gauresh-Updated"
+  "firstName":"Rahul"
 }
 
-### 6. DELETE USER (204 No Content)
-DELETE {{baseUrl}}/users/1
+### ==========================================
+### ASSIGNMENT ERROR SCENARIOS
+### ==========================================
 
-### 7. AUTH TEST (401 Unauthorized)
-GET {{baseUrl}}/users/secure-data
-auth-key: my-secret-key
-role: admin
+### 1. USER_ALREADY_EXISTS (Create account with existing email)
+# Run this right after the valid create above
+POST {{baseUrl}}/users
+Content-Type: application/json
 
-### 8. 500 INTERNAL SERVER ERROR
-GET {{baseUrl}}/users/isr
+{
+  "firstName": "Gauresh Clone",
+  "lastName": "Tambe",
+  "email": "gauresh@example.com", 
+  "phoneNumber": "+919876543210",
+  "password": "securePassword123"
+}
 
-### 9. 504 GATEWAY TIMEOUT 
+
+### 2. VALIDATION_ERROR / MALFORMED JSON
+# Missing required fields or wrong types (Triggers ValidationPipe)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "firstName": "raj",
+  "email": "not-a-valid-email",
+  "phoneNumber": 12345 
+}
+
+
+### 3. GATEWAY_TIMEOUT (Database connection times out)
+# Triggers the async timeout() method in your service
 GET {{baseUrl}}/users/timeout
 
-### 10. 502 BAD GATEWAY 
-GET {{baseUrl}}/users/badgateway
 
-### 11. 422 UNPROCESSABLE ENTITY (Duplicate Email)
+### 4. INSUFFICIENT_PERMISSIONS (Delete another user's resource)
+# Note: You need auth guards implemented for this to throw 403, 
+# but this represents the assignment requirement.
+DELETE {{baseUrl}}/users/1
 
-POST {{baseUrl}}/users
+
+
+# ### 5. RATE_LIMIT_EXCEEDED (Too many requests)
+# # Spam this request 10+ times quickly to trigger ThrottlerGuard (if implemented)
+# GET {{baseUrl}}/users
+
+
+### 6. MISSING_AUTHENTICATION (Required auth token missing)
+# Requesting a secure endpoint with no headers
+GET {{baseUrl}}/users/secure-data
+auth-key:my-secret-key
+role:admin
+
+
+### 7. INVALID_PAGINATION_OFFSET (Offset exceeds total records)
+# Requesting page 100 when you only have 1 or 2 users
+GET {{baseUrl}}/users?page=100&limit=10
+
+
+### ==========================================
+### EXTRA SERVICE & DTO VALIDATION TESTS
+### ==========================================
+
+### 8. VALIDATION_ERROR (Negative Pagination via DTO)
+# Triggers your ListUsersDto class-validator rules (@Min(1))
+GET {{baseUrl}}/users?page=-1&limit=-5
+
+
+### 9. INVALID_FILTER_FIELD (Custom Service Error)
+# Trying to filter by a field that doesn't exist in the User entity
+GET {{baseUrl}}/users?filterField=hackerField&filterValue=123
+
+
+### 10. INVALID_SORT_FIELD (Custom Service Error)
+# Trying to sort by a field that doesn't exist
+GET {{baseUrl}}/users?sortBy=nonExistentField&order=ASC
+
+
+### 11. RESOURCE_NOT_FOUND (Updating a non-existent user)
+PATCH {{baseUrl}}/users/9999
 Content-Type: application/json
 
 {
-  "firstName": "Zavian",
-  "lastName": "Art",
-  "email": "gauresh@example.com",
-  "phoneNumber": "+919876543219",
-  "password": "securePassword123"
+  "firstName": "Ghost"
 }
+
+
+### 12. RESOURCE_NOT_FOUND (Deleting a non-existent user)
+DELETE {{baseUrl}}/users/9999
