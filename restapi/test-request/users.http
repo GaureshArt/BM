@@ -234,9 +234,9 @@ POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "firstName": "Gauresh",
+  "firstName": "amit",
   "lastName": "Tambe",
-  "email": "gauresh@example.com",
+  "email": "amit@example.com",
   "phoneNumber": "+919876543210",
   "password": "securePassword123",
   "role":"staff"
@@ -245,11 +245,11 @@ Content-Type: application/json
 ###
 
 PATCH {{baseUrl}}/users/1
-user-id:1
+user-id:2
 Content-Type: application/json
 
 {
-  "firstName":"Rahul"
+  "firstName":"rohan change by admin"
 }
 
 ### ==========================================
@@ -284,19 +284,15 @@ Content-Type: application/json
 
 ### 3. GATEWAY_TIMEOUT (Database connection times out)
 # Triggers the async timeout() method in your service
-GET {{baseUrl}}/users/timeout
+GET {{baseUrl}}/users?filterField=firstNames&filterValue=raj
 
 
 ### 4. INSUFFICIENT_PERMISSIONS (Delete another user's resource)
-# Note: You need auth guards implemented for this to throw 403, 
-# but this represents the assignment requirement.
+
 DELETE {{baseUrl}}/users/1
 
 
 
-# ### 5. RATE_LIMIT_EXCEEDED (Too many requests)
-# # Spam this request 10+ times quickly to trigger ThrottlerGuard (if implemented)
-# GET {{baseUrl}}/users
 
 
 ### 6. MISSING_AUTHENTICATION (Required auth token missing)
