@@ -35,7 +35,6 @@ export class UsersService {
     filterValue?: string,
   ) {
     let result = [...this.users];
-
     if (filterField && filterValue) {
       if (this.users.length > 0 && !(filterField in this.users[0])) {
         throw new HttpException({

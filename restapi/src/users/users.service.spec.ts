@@ -36,6 +36,15 @@ describe('UsersService', () => {
         role: UserRoleEnum.staff
     });
 
+    const seedAdditionalStaff = () => service.create({
+        firstName: 'Zack',
+        lastName: 'Smith',
+        email: 'zack@test.com',
+        password: 'password',
+        phoneNumber: '+919876543211',
+        role: UserRoleEnum.staff
+    });
+
     describe('create()', () => {
         it('should successfully create a user', () => {
             const result = seedAdmin();
@@ -52,7 +61,7 @@ describe('UsersService', () => {
             } catch (err) {
                 expect(err).toBeInstanceOf(HttpException);
                 expect(err.getStatus()).toEqual(422);
-                expect((err.getResponse()).error_code).toEqual('USER_ALREADY_EXISTS');
+                expect((err.getResponse() as any).error_code).toEqual('USER_ALREADY_EXISTS');
             }
         });
     });
@@ -61,13 +70,41 @@ describe('UsersService', () => {
         beforeEach(() => {
             seedAdmin();
             seedStaff();
+            seedAdditionalStaff();
         });
 
-        it('should paginate results correctly', () => {
-            const result = service.list(1, 1);
+        it('should return all records without pagination if page and limit are undefined', () => {
+            const result = service.list();
+            expect(result.data).toHaveLength(3);
+            expect(result.pagination.current_page).toEqual(1);
+            expect(result.pagination.total_pages).toEqual(1);
+        });
+
+        it('should filter results by valid filterField and filterValue', () => {
+            const result = service.list(1, 10, undefined, 'ASC', 'firstName', 'Zack');
             expect(result.data).toHaveLength(1);
-            expect(result.pagination.total_records).toEqual(2);
-            expect(result.pagination.total_pages).toEqual(2);
+            expect(result.data[0].firstName).toEqual('Zack');
+        });
+
+        it('should sort results by a valid sortBy field in ASC order', () => {
+            const result = service.list(1, 10, 'firstName', 'ASC');
+            expect(result.data[0].firstName).toEqual('Admin');
+            expect(result.data[2].firstName).toEqual('Zack');
+        });
+
+        it('should sort results by a valid sortBy field in DESC order', () => {
+            const result = service.list(1, 10, 'firstName', 'DESC');
+            expect(result.data[0].firstName).toEqual('Zack');
+            expect(result.data[2].firstName).toEqual('Admin');
+        });
+
+        it('should paginate results correctly and calculate previous/next pages', () => {
+            const result = service.list(2, 1);
+            expect(result.data).toHaveLength(1);
+            expect(result.pagination.total_records).toEqual(3);
+            expect(result.pagination.total_pages).toEqual(3);
+            expect(result.pagination.prev_page).toEqual(1);
+            expect(result.pagination.next_page).toEqual(3);
         });
 
         it('should throw INVALID_PAGINATION_OFFSET if page exceeds total', () => {
@@ -86,7 +123,7 @@ describe('UsersService', () => {
                 fail('Should have thrown INVALID_FILTER_FIELD');
             } catch (err) {
                 expect(err).toBeInstanceOf(HttpException);
-                expect((err.getResponse()).error_code).toEqual('INVALID_FILTER_FIELD');
+                expect((err.getResponse() as any).error_code).toEqual('INVALID_FILTER_FIELD');
             }
         });
 
@@ -96,7 +133,7 @@ describe('UsersService', () => {
                 fail('Should have thrown INVALID_SORT_FIELD');
             } catch (err) {
                 expect(err).toBeInstanceOf(HttpException);
-                expect((err.getResponse()).error_code).toEqual('INVALID_SORT_FIELD');
+                expect((err.getResponse() as any).error_code).toEqual('INVALID_SORT_FIELD');
             }
         });
     });
@@ -110,11 +147,11 @@ describe('UsersService', () => {
 
         it('should throw RESOURCE_NOT_FOUND if user does not exist', () => {
             try {
-                service.findOne(1);
+                service.findOne(999);
                 fail('Should have thrown RESOURCE_NOT_FOUND');
             } catch (err) {
                 expect(err).toBeInstanceOf(HttpException);
-                expect((err.getResponse()).error_code).toEqual('RESOURCE_NOT_FOUND');
+                expect((err.getResponse() as any).error_code).toEqual('RESOURCE_NOT_FOUND');
             }
         });
     });
@@ -123,10 +160,10 @@ describe('UsersService', () => {
         it('should throw INVALID_CREDENTIALS if requesting user does not exist', () => {
             const target = seedAdmin();
             try {
-                service.update(2, target.id, { firstName: 'Ghost' });
+                service.update(999, target.id, { firstName: 'Ghost' });
                 fail('Should have thrown INVALID_CREDENTIALS');
             } catch (err) {
-                expect((err.getResponse()).error_code).toEqual('INVALID_CREDENTIALS');
+                expect((err.getResponse() as any).error_code).toEqual('INVALID_CREDENTIALS');
             }
         });
 
@@ -137,7 +174,17 @@ describe('UsersService', () => {
                 service.update(staff.id, admin.id, { firstName: 'Hacked' });
                 fail('Should have thrown INSUFFICIENT_PERMISSIONS');
             } catch (err) {
-                expect((err.getResponse()).error_code).toEqual('INSUFFICIENT_PERMISSIONS');
+                expect((err.getResponse() as any).error_code).toEqual('INSUFFICIENT_PERMISSIONS');
+            }
+        });
+
+        it('should throw RESOURCE_NOT_FOUND if target user to update does not exist', () => {
+            const admin = seedAdmin();
+            try {
+                service.update(admin.id, 999, { firstName: 'Ghost' });
+                fail('Should have thrown RESOURCE_NOT_FOUND');
+            } catch (err) {
+                expect((err.getResponse() as any).error_code).toEqual('RESOURCE_NOT_FOUND');
             }
         });
 
@@ -156,6 +203,16 @@ describe('UsersService', () => {
     });
 
     describe('remove()', () => {
+        it('should throw INVALID_CREDENTIALS if requesting user does not exist', () => {
+            const admin = seedAdmin();
+            try {
+                service.remove(999, admin.id);
+                fail('Should have thrown INVALID_CREDENTIALS');
+            } catch (err) {
+                expect((err.getResponse() as any).error_code).toEqual('INVALID_CREDENTIALS');
+            }
+        });
+
         it('should throw INSUFFICIENT_PERMISSIONS if staff removes another user', () => {
             const staff = seedStaff();
             const admin = seedAdmin();
@@ -163,7 +220,28 @@ describe('UsersService', () => {
                 service.remove(staff.id, admin.id);
                 fail('Should have thrown INSUFFICIENT_PERMISSIONS');
             } catch (err) {
-                expect((err.getResponse()).error_code).toEqual('INSUFFICIENT_PERMISSIONS');
+                expect((err.getResponse() as any).error_code).toEqual('INSUFFICIENT_PERMISSIONS');
+            }
+        });
+
+        it('should throw RESOURCE_NOT_FOUND if target user to remove does not exist', () => {
+            const admin = seedAdmin();
+            try {
+                service.remove(admin.id, 999);
+                fail('Should have thrown RESOURCE_NOT_FOUND');
+            } catch (err) {
+                expect((err.getResponse() as any).error_code).toEqual('RESOURCE_NOT_FOUND');
+            }
+        });
+
+        it('should allow staff to remove their own account', () => {
+            const staff = seedStaff();
+            service.remove(staff.id, staff.id);
+            try {
+                service.findOne(staff.id);
+                fail('Should have thrown RESOURCE_NOT_FOUND');
+            } catch (err) {
+                expect((err.getResponse() as any).error_code).toEqual('RESOURCE_NOT_FOUND');
             }
         });
 
@@ -174,11 +252,13 @@ describe('UsersService', () => {
 
             try {
                 service.findOne(staff.id);
+                fail('Should have thrown RESOURCE_NOT_FOUND');
             } catch (err) {
-                expect((err.getResponse()).error_code).toEqual('RESOURCE_NOT_FOUND');
+                expect((err.getResponse() as any).error_code).toEqual('RESOURCE_NOT_FOUND');
             }
         });
     });
+
     describe('timeout()', () => {
         afterEach(() => {
             jest.restoreAllMocks();
@@ -198,7 +278,7 @@ describe('UsersService', () => {
                 fail('The request should have timed out!');
 
             } catch (err) {
-                expect((err.getResponse()).error_code).toEqual('GATEWAY_TIMEOUT');
+                expect((err.getResponse() as any).error_code).toEqual('GATEWAY_TIMEOUT');
             }
         });
     });
