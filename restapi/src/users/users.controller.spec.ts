@@ -2,16 +2,25 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { UserRoleEnum } from './dto/create-user.dto';
+import {
+    UnauthorizedException,
+    ForbiddenException,
+    InternalServerErrorException,
+    GatewayTimeoutException,
+    BadGatewayException
+} from '@nestjs/common';
 
 describe('UsersController', () => {
     let controller: UsersController;
     let service: UsersService;
+
     const mockUsersService = {
         create: jest.fn((dto) => ({ id: 1, ...dto })),
         list: jest.fn((page, limit) => ({ data: [], pagination: {} })),
         findOne: jest.fn((id) => ({ id, firstName: 'Test' })),
         update: jest.fn((userId, id, dto) => ({ id, ...dto })),
         remove: jest.fn((userId, id) => undefined),
+        timeout: jest.fn(),
     };
 
     beforeEach(async () => {
@@ -25,8 +34,12 @@ describe('UsersController', () => {
             ],
         }).compile();
 
-        controller = module.get(UsersController);
-        service = module.get(UsersService);
+        controller = module.get<UsersController>(UsersController);
+        service = module.get<UsersService>(UsersService);
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     describe('Standard Routes', () => {
@@ -60,4 +73,63 @@ describe('UsersController', () => {
         });
     });
 
+    describe('getSecureData()', () => {
+        it('should throw UnauthorizedException if auth-key is invalid', () => {
+            expect(() => {
+                controller.getSecureData('wrong-key', 'admin');
+            }).toThrow(UnauthorizedException);
+        });
+
+        it('should throw ForbiddenException if role is not admin', () => {
+            expect(() => {
+                controller.getSecureData('my-secret-key', 'staff');
+            }).toThrow(ForbiddenException);
+        });
+
+        it('should return secure data if auth-key and role are valid', () => {
+            const result = controller.getSecureData('my-secret-key', 'admin');
+            expect(result).toEqual({ data: 'Secret info' });
+        });
+    });
+
+    describe('throwError()', () => {
+        it('should throw InternalServerErrorException', () => {
+            expect(() => {
+                controller.throwError();
+            }).toThrow(InternalServerErrorException);
+        });
+    });
+
+    describe('timeout()', () => {
+        it('should call service.timeout and return its result', async () => {
+            const expectedResult = { success: true };
+            mockUsersService.timeout.mockResolvedValueOnce(expectedResult);
+
+            const result = await controller.timeout();
+            expect(service.timeout).toHaveBeenCalled();
+            expect(result).toEqual(expectedResult);
+        });
+    });
+
+    describe('badGateway()', () => {
+        it('should return successfully if timeout does not throw', async () => {
+            const expectedResult = { success: true };
+            mockUsersService.timeout.mockResolvedValueOnce(expectedResult);
+
+            const result = await controller.badGateway();
+            expect(result).toEqual(expectedResult);
+        });
+
+        it('should throw BadGatewayException if GatewayTimeoutException is thrown', async () => {
+            mockUsersService.timeout.mockRejectedValueOnce(new GatewayTimeoutException());
+
+            await expect(controller.badGateway()).rejects.toThrow(BadGatewayException);
+        });
+
+        it('should throw InternalServerErrorException for any other error', async () => {
+            mockUsersService.timeout.mockRejectedValueOnce(new Error('Unexpected error'));
+
+            await expect(controller.badGateway()).rejects.toThrow(InternalServerErrorException);
+        });
+    });
 });
